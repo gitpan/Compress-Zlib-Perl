@@ -1,0 +1,9 @@
+Revision history for Perl extension Compress::Zlib::Perl.
+
+0.01  Sat Feb 14 14:25:45 2004
+	- original version; created by h2xs 1.22 with options
+		-b 5.5.3 -n Compress::Zlib::PurePerl
+
+      Reworked Ton's elegant code into messy state machine.
+      Wrote some test cases.
+      Renamed to Compress::Zlib::Perl after consulting module-authors list.
