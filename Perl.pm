@@ -1,9 +1,9 @@
 package Compress::Zlib::Perl;
 
-use 5.006_001;
+use 5.004;
 
 # use if $] > 5.006, 'warnings';
-use warnings;
+# use warnings;
 use strict;
 
 require Exporter;
@@ -23,13 +23,18 @@ use constant MAX_WBITS => 16;
 	     Z_OK Z_STREAM_END MAX_WBITS crc32
 );
 
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 {
   my @crc32;
 
   sub _init_crc32 {
-    my $p=oct reverse sprintf"%032bb0", 0x04C11DB7;
+    # I'm not sure why Ton wanted to reverse the order of the bits in this
+    # constant, rather than using the bit-reversed constant
+    # my $p=oct reverse sprintf"%032bb0", 0x04C11DB7;
+    # But the only 5.005 friendly way I can find is this:
+    my $p
+      = unpack "I", pack "b*", scalar reverse unpack "b*", pack "I", 0x04C11DB7;
     @crc32 = map{for my$s(0..7) {$_ = $_>>1 ^ ($_&1 && $p)} $_} 0..255;
   }
 
@@ -58,7 +63,8 @@ $VERSION = '0.01';
   sub crc32 {
     _init_crc32() unless @crc32;
     my ($buffer, $crc32) = @_;
-    ($crc32 ||= 0) ^= 0xffffffff;
+    $crc32 ||= 0;
+    $crc32 ^= 0xffffffff;
     my $pos = -length $buffer;
     $crc32 = $crc32>>8 ^ $crc32[$crc32&0xff^ord(substr($buffer, $pos++, 1))]
       while $pos;
@@ -173,10 +179,11 @@ sub make_huffman {
   for (@counts) {
     $value *= 2;
     next unless ++$bits && $_;
-    $code{sprintf"%0${bits}b", $value++} = $_ for @$_;
+    # Ton used sprintf"%0${bits}b", $value;
+    $code{reverse unpack "b$bits", pack "V", $value++} = $_ for @$_;
   }
   # Close the code to avoid infinite loops (and out of memory)
-  $code{sprintf"%0${bits}b", $value++} = undef for
+  $code{reverse unpack "b$bits", pack "V", $value++} = undef for
     $value .. (1 << $bits)-1;
   @code{0, 1} = () unless %code;
   return \%code;
@@ -469,6 +476,7 @@ sub make_huffman {
 
 1;
 __END__
+
 =head1 NAME
 
 Compress::Zlib::Perl - (Partial) Pure perl implementation of Compress::Zlib

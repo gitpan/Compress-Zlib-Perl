@@ -1,4 +1,4 @@
-Compress/Zlib/Perl version 0.01
+Compress/Zlib/Perl version 0.02
 ===============================
 
 This a very incomplete pure perl implementation of Compress::Zlib's API.
